@@ -123,7 +123,7 @@ class M3UPlayer(QtWidgets.QMainWindow):
             if line.startswith("#EXTINF:-1"):
                 info = re.sub(r'^#EXTINF:-1,\s*', '', line)
 
-                pattern = r'tvg-id="(.*?)" tvg-name="(.*?)" tvg-logo="(.*?)" group-title="(.*?)"'
+                pattern = r'tvg-(?:ID|id)=["\'](.*?)["\'] tvg-name=["\'](.*?)["\'] tvg-logo=["\'](.*?)["\'] group-title=["\'](.*?)["\']'
                 match = re.search(pattern, info)
 
                 if match:
