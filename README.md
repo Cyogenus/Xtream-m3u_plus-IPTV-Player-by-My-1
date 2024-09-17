@@ -1,32 +1,24 @@
-IPTV-M3U_Plus-Player-by-MY-1
+Xtream & m3u_plus IPTV Player by My-1
+This project is a feature-rich IPTV player built using Python and PyQt5, designed to work with both M3U_plus playlists and Xtream Codes API. The player allows users to easily manage and play IPTV channels, movies, and series directly from their playlists.
 
-Title: IPTV-M3U_Plus-Player-by-MY-1: Stream Your Favorite Content
+Features
+M3U_plus Playlist Support:
+Load and Play Channels: Supports loading M3U_plus playlists containing live TV channels, movies, and series.
+Categorized Playlist: Channels are organized into tabs (Live TV, Movies, and Series) for easy navigation.
+Playlist Navigation: Efficient 'Go Back' functionality to navigate between categories and sub-categories.
+External Player Support: Channels can be played using an external VLC player.
+Xtream Codes API Support:
+Xtream API Login: Log in using your Xtream Codes API credentials (URL, Username, and Password).
+Dynamic Playlist Loading: Fetches live TV, movie, and series categories upon login and dynamically loads channels or episodes when categories are selected.
+Series Navigation: Allows navigation through series categories and streams specific episodes from the Xtream API.
+Playlist Tabs: Like the M3U player, Xtream API playlists are displayed in Live TV, Movies, and Series tabs.
+Error Handling: Graceful error handling for failed playlist loading or invalid stream URLs.
+Best Player for Streaming: VLC
+For the best experience, it is recommended to use VLC media player to play channels and streams. VLC is a robust, open-source media player that supports various streaming formats and ensures smooth playback for IPTV content.
 
-Description:
+You can download VLC media player from the official website:
 
-Welcome to our IPTV Player, a powerful tool designed to enhance your streaming experience. With this program, you can effortlessly play streams from M3U and M3U_plus playlists, offering you access to a wide array of channels and video-on-demand (VOD) content.
-
-Features:
-
-Stream from M3U and M3U_plus Playlists: Seamlessly access IPTV content from standard M3U and extended M3U_plus playlists, ensuring compatibility with a variety of sources.
-Easy Playlist Download: Our program simplifies the process of accessing content by allowing you to download playlists directly within the application interface.
-Flexible Media Player Options: Choose your preferred media player to view channels and VOD content. While we recommend the versatile and widely-used VLC Player, you have the freedom to select any media player that suits your preferences.
-Contribute and Customize: We believe in the power of collaboration and welcome contributions from the community. If you have ideas for improvement or wish to customize the program to better suit your needs, feel free to fork the project and implement your changes.
-Getting Started:
-
-To begin enjoying the benefits of our IPTV Player, follow these simple steps:
-
-Download and install VLC Player from https://www.videolan.org.
-Clone or download the IPTV Player repository from GitHub.
-Run the program and start exploring your favorite channels and VOD content.
-Contribution Guidelines:
-
-We encourage you to contribute to the development of our IPTV Player. Whether you want to fix bugs, add new features, or enhance the user experience, your contributions are valuable. To get started:
-
-Fork the project on GitHub.
-Make your desired changes or improvements.
-Submit a pull request, detailing the purpose and scope of your changes.
+Download VLC Player
 
 
-
-![image](https://github.com/Cyogenus/IPTV-M3U_Plus-Player-by-MY-1/assets/80471318/e7be83b2-20e2-444f-930f-f3ab2b90d40e)
+![Screenshot 2024-09-16 213510](https://github.com/user-attachments/assets/26320dd3-87d4-4885-96f4-d774b10d384f)
