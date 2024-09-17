@@ -83,10 +83,7 @@ class XtreamLoginWindow(QWidget):
         self.password_input = QLineEdit(self)
         self.password_input.setEchoMode(QLineEdit.Password)  # Hide password input
 
-        # Set default text in the input fields (you may want to remove these in production)
-        self.url_input.setText("http://hostengine.live:25461")
-        self.username_input.setText("CarlaLuck")
-        self.password_input.setText("5467@")
+
 
         self.login_button = QPushButton("Login", self)
         self.login_button.clicked.connect(self.login)
