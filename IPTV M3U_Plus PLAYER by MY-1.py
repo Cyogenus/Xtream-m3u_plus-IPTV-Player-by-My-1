@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import QVBoxLayout, QLineEdit, QLabel, QPushButton, QListWi
 import qdarkstyle  # Ensure you have installed qdarkstyle via pip
 
 # Set your custom User-Agent here
-CUSTOM_USER_AGENT = ""
+CUSTOM_USER_AGENT = "Connection: Keep-Alive User-Agent: okhttp/5.0.0-alpha.2 Accept-Encoding: gzip, deflate"
 
 
 # Custom Progress Bar with text aligned to the left and percentage on the right
@@ -647,8 +647,19 @@ class IPTVPlayerApp(QtWidgets.QMainWindow):
             if tab_name != "Series":
                 for entry in self.entries:
                     stream_id = entry.get("stream_id")
+                    container_extension = entry.get("container_extension", "m3u8")  # Default to "m3u8" if not found
                     if stream_id:
-                        entry["url"] = f"{self.server}/{stream_type}/{self.username}/{self.password}/{stream_id}.m3u8"
+                        entry["url"] = f"{self.server}/{stream_type}/{self.username}/{self.password}/{stream_id}.{container_extension}"
+                    else:
+                        entry["url"] = None
+
+            # For series, fetch episodes later, so don't assign URLs yet
+            if tab_name != "Live":
+                for entry in self.entries:
+                    stream_id = entry.get("stream_id")
+                    container_extension = entry.get("container_extension", "ts")  # Default to "m3u8" if not found
+                    if stream_id:
+                        entry["url"] = f"{self.server}/{stream_type}/{self.username}/{self.password}/{stream_id}.{container_extension}"
                     else:
                         entry["url"] = None
 
