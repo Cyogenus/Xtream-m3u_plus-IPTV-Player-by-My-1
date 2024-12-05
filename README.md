@@ -3,6 +3,8 @@ This project is a feature-rich IPTV player built using Python and PyQt5, designe
 
 Features
 M3U_plus Playlist Support:
+EPG Support
+Addresss book. 
 Load and Play Channels: Supports loading M3U_plus playlists containing live TV channels, movies, and series.
 Categorized Playlist: Channels are organized into tabs (Live TV, Movies, and Series) for easy navigation.
 Playlist Navigation: Efficient 'Go Back' functionality to navigate between categories and sub-categories.
@@ -16,9 +18,10 @@ Error Handling: Graceful error handling for failed playlist loading or invalid s
 Best Player for Streaming: VLC
 For the best experience, it is recommended to use VLC media player to play channels and streams. VLC is a robust, open-source media player that supports various streaming formats and ensures smooth playback for IPTV content.
 
-You can download VLC media player from the official website:
-
-Download VLC Player
+You can download VLC media player from the official website: https://www.videolan.org/vlc/
 
 
-![Screenshot 2024-09-16 213510](https://github.com/user-attachments/assets/26320dd3-87d4-4885-96f4-d774b10d384f)
+
+
+![image](https://github.com/user-attachments/assets/6328d0e9-3b66-42b6-89c3-042f96b1f9d3)
+
