@@ -1,4 +1,4 @@
-XTREME IPTV PLAYER My-1
+XTREME IPTV PLAYER by My-1
 
 This project is a feature-rich IPTV player built using Python and PyQt5, designed to work with both M3U_plus playlists and Xtream Codes API. The player allows users to easily manage and play IPTV channels, movies, and series directly from their playlists.
 
