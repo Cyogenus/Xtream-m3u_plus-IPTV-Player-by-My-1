@@ -13,5 +13,6 @@ This IPTV player, built with Python and PyQt5, supports M3U_plus playlists and X
 - **Series Navigation:** Access series categories and specific episodes.
 - **Error Handling:** Graceful handling of loading issues.
 - **Recommended Player:** For optimal performance, use VLC media player. Download it at: https://www.videolan.org/vlc/
+- **Recommended Player:** For optimal performance, use SMPlayer player. Download it at: https://www.smplayer.info
 
- ![IMG_1158](https://github.com/user-attachments/assets/bfc9fa63-1549-4539-ba33-bdf5e3c1fbc1)
+![image](https://github.com/user-attachments/assets/7b203a12-38dd-4a81-b131-47266a63c1e6)
