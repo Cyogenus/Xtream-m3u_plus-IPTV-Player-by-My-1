@@ -298,7 +298,7 @@ class AddCredentialsDialog(QtWidgets.QDialog):
 class IPTVPlayerApp(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Xtream IPTV Player by MY-1 V3.5")
+        self.setWindowTitle("Xtream IPTV Player by MY-1 V3.7")
         self.resize(700, 550)
 
         self.groups = {}
@@ -351,19 +351,19 @@ class IPTVPlayerApp(QMainWindow):
         row1_layout.setSpacing(15)
 
         self.server_label = QLabel("Server URL:")
-        self.server_label.setFixedWidth(100)
+        self.server_label.setFixedWidth(53)
         self.server_entry = QLineEdit()
         self.server_entry.setPlaceholderText("Enter Server URL...")
         self.server_entry.setClearButtonEnabled(True)
 
         self.username_label = QLabel("Username:")
-        self.username_label.setFixedWidth(100)
+        self.username_label.setFixedWidth(50)
         self.username_entry = QLineEdit()
         self.username_entry.setPlaceholderText("Enter Username...")
         self.username_entry.setClearButtonEnabled(True)
 
         self.password_label = QLabel("Password:")
-        self.password_label.setFixedWidth(100)
+        self.password_label.setFixedWidth(50)
         self.password_entry = QLineEdit()
         self.password_entry.setPlaceholderText("Enter Password...")
         self.password_entry.setEchoMode(QLineEdit.Password)
