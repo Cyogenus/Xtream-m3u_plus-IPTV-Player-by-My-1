@@ -6,14 +6,17 @@ import subprocess
 import configparser
 import re
 import json
+import qdarkstyle
 import html
+import os
+from pathlib import Path
 from lxml import etree
 from datetime import datetime
 from dateutil import parser, tz
 import xml.etree.ElementTree as ET
 from PyQt5.QtGui import QIcon, QFont
 from PyQt5.QtCore import (
-    Qt, QTimer, QPropertyAnimation, QEasingCurve, QSize, QObject, pyqtSignal, QRunnable, pyqtSlot, QThreadPool
+    Qt, QTimer, QPropertyAnimation, QEasingCurve, QSize, QObject, pyqtSignal, QRunnable, pyqtSlot, QThreadPool, QDir
 )
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import (
@@ -22,6 +25,14 @@ from PyQt5.QtWidgets import (
     QDialog, QFormLayout, QDialogButtonBox, QTabWidget, QListWidgetItem,
     QSpinBox, QMenu, QAction, QTextEdit
 )
+
+is_windows = sys.platform.startswith('win')
+is_mac = sys.platform.startswith('darwin')
+is_linux = sys.platform.startswith('linux')
+
+# EPG Cache File
+cache_file = Path.home() / '.iptv' / 'epg_cache1.xml'
+os.makedirs(cache_file.parent, exist_ok=True)
 
 CUSTOM_USER_AGENT = (
     "Connection: Keep-Alive User-Agent: okhttp/5.0.0-alpha.2 "
@@ -298,7 +309,7 @@ class AddCredentialsDialog(QtWidgets.QDialog):
 class IPTVPlayerApp(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Xtream IPTV Player by MY-1 V3.7")
+        self.setWindowTitle("Xtream IPTV Player by MY-1 V3.9")
         self.resize(700, 550)
 
         self.groups = {}
@@ -332,10 +343,11 @@ class IPTVPlayerApp(QMainWindow):
         self.threadpool.setMaxThreadCount(10)
         self.epg_id_mapping = {}
         self.epg_name_map = {}
+        
 
         self.go_back_icon = self.style().standardIcon(QtWidgets.QStyle.SP_ArrowBack)
         self.live_channel_icon = self.style().standardIcon(QtWidgets.QStyle.SP_MediaVolume)
-        self.movies_channel_icon = self.style().standardIcon(QtWidgets.QStyle.SP_MediaPlay)
+        self.movies_channel_icon = self.style().standardIcon(QtWidgets.QStyle.SP_ComputerIcon)
         self.series_channel_icon = self.style().standardIcon(QtWidgets.QStyle.SP_DirIcon)
 
         central_widget = QWidget()
@@ -422,6 +434,12 @@ class IPTVPlayerApp(QMainWindow):
         self.epg_checkbox.stateChanged.connect(self.on_epg_checkbox_toggled)
         checkbox_layout.addWidget(self.epg_checkbox)
 
+        # **Add Dark Theme Checkbox**
+        self.dark_theme_checkbox = QCheckBox("Dark Theme")
+        self.dark_theme_checkbox.setToolTip("Enable or disable dark theme")
+        self.dark_theme_checkbox.stateChanged.connect(self.toggle_dark_theme)
+        checkbox_layout.addWidget(self.dark_theme_checkbox)
+
         self.font_size_label = QLabel("Font Size:")
         self.font_size_spinbox = QSpinBox()
         self.font_size_spinbox.setRange(8, 24)
@@ -449,7 +467,7 @@ class IPTVPlayerApp(QMainWindow):
 
         self.tab_icon_size = QSize(24, 24)
         live_icon = self.style().standardIcon(QtWidgets.QStyle.SP_MediaVolume)
-        movies_icon = self.style().standardIcon(QtWidgets.QStyle.SP_MediaPlay)
+        movies_icon = self.style().standardIcon(QtWidgets.QStyle.SP_ComputerIcon)
         series_icon = self.style().standardIcon(QtWidgets.QStyle.SP_DirIcon)
 
         self.live_tab = QWidget()
@@ -541,6 +559,48 @@ class IPTVPlayerApp(QMainWindow):
         self.playlist_progress_animation.setDuration(1000)  # longer duration for smoother animation
         self.playlist_progress_animation.setEasingCurve(QEasingCurve.InOutQuad)
 
+        self.load_theme_preference()
+
+
+    def toggle_dark_theme(self, state):
+        """
+        Toggle the application's dark theme based on the checkbox state.
+        """
+        if state == Qt.Checked:
+            QApplication.instance().setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+            self.save_theme_preference(dark=True)
+        else:
+            QApplication.instance().setStyleSheet("")
+            self.save_theme_preference(dark=False)
+
+    def load_theme_preference(self):
+        """
+        Load the saved theme preference from config.ini and apply it.
+        """
+        config = configparser.ConfigParser()
+        config.read('config.ini')
+        dark = False
+        if 'Theme' in config:
+            dark = config['Theme'].getboolean('Dark', fallback=False)
+        if dark:
+            self.dark_theme_checkbox.setChecked(True)
+            QApplication.instance().setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+        else:
+            self.dark_theme_checkbox.setChecked(False)
+            QApplication.instance().setStyleSheet("")
+
+    def save_theme_preference(self, dark):
+        """
+        Save the theme preference to config.ini.
+        """
+        config = configparser.ConfigParser()
+        config.read('config.ini')
+        if 'Theme' not in config:
+            config['Theme'] = {}
+        config['Theme']['Dark'] = str(dark)
+        with open('config.ini', 'w') as config_file:
+            config.write(config_file)
+
     def add_search_icon(self, search_bar):
         search_icon = QIcon.fromTheme("edit-find")
         if search_icon.isNull():
@@ -548,11 +608,14 @@ class IPTVPlayerApp(QMainWindow):
         search_bar.addAction(search_icon, QLineEdit.LeadingPosition)
 
     def toggle_keep_on_top(self, state):
+        flags = self.windowFlags()
         if state == Qt.Checked:
-            self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
+            flags |= Qt.WindowStaysOnTopHint
         else:
-            self.setWindowFlags(self.windowFlags() & ~Qt.WindowStaysOnTopHint)
+            flags &= ~Qt.WindowStaysOnTopHint
+        self.setWindowFlags(flags)
         self.show()
+
 
     def add_search_bar(self, layout, search_bar):
         layout.addWidget(search_bar)
@@ -1293,13 +1356,25 @@ class IPTVPlayerApp(QMainWindow):
             if not stream_url:
                 self.animate_progress(0, 100, "Stream URL not found")
                 return
+
             if self.external_player_command:
-                subprocess.Popen([self.external_player_command, stream_url])
+                user_agent_argument = f":http-user-agent=Lavf53.32.100"
+                command = [self.external_player_command, stream_url, user_agent_argument]
+
+                if is_linux:
+                    # Ensure the external player command is executable
+                    if not os.access(self.external_player_command, os.X_OK):
+                        self.animate_progress(0, 100, "Selected player is not executable")
+                        return
+
+                subprocess.Popen(command)
             else:
                 self.animate_progress(0, 100, "No external player configured")
         except Exception as e:
             print(f"Error playing channel: {e}")
             self.animate_progress(0, 100, "Error playing channel")
+
+
 
     def on_tab_change(self, index):
         try:
@@ -1354,19 +1429,56 @@ class IPTVPlayerApp(QMainWindow):
             print(f"Error while switching tabs: {e}")
 
     def choose_external_player(self):
-        file_dialog = QFileDialog()
-        file_dialog.setFileMode(QFileDialog.ExistingFile)
-        if sys.platform.startswith('win'):
-            file_dialog.setNameFilter("Executable files (*.exe *.bat)")
-        else:
-            file_dialog.setNameFilter("Executable files (*)")
-        file_dialog.setWindowTitle("Select External Media Player")
-        if file_dialog.exec_():
-            file_paths = file_dialog.selectedFiles()
-            if len(file_paths) > 0:
-                self.external_player_command = file_paths[0]
-                self.save_external_player_command()
-                print("External Player selected:", self.external_player_command)
+        try:
+            file_dialog = QFileDialog()
+            file_dialog.setFileMode(QFileDialog.ExistingFile)
+            file_dialog.setDirectory(QDir.home())  # Start in the user's home directory
+
+            # Apply appropriate filters based on the OS
+            if is_windows:
+                file_dialog.setNameFilter("Executable files (*.exe *.bat)")
+            elif is_mac:
+                file_dialog.setNameFilter("Applications (*.app);;All files (*)")
+            elif is_linux:
+                file_dialog.setNameFilter("Executable files (*)")
+
+            file_dialog.setWindowTitle("Select External Media Player")
+
+            # Open the file dialog
+            if file_dialog.exec_():
+                file_paths = file_dialog.selectedFiles()
+                if file_paths:
+                    selected_path = file_paths[0]
+                    
+                    # Handle macOS .app bundles
+                    if is_mac and selected_path.endswith(".app"):
+                        # Extract the actual executable path from the .app bundle
+                        executable_path = f"{selected_path}/Contents/MacOS/VLC"
+                        if os.path.exists(executable_path):
+                            self.external_player_command = executable_path
+                        else:
+                            print("Error: Executable not found inside .app bundle.")
+                            return
+                    else:
+                        # Use the selected file path directly for other cases
+                        self.external_player_command = selected_path
+
+                    # Save the selected external player command
+                    self.save_external_player_command()
+                    print("External Player selected:", self.external_player_command)
+            else:
+                print("File dialog canceled.")
+        except Exception as e:
+            print("Error selecting external player:", str(e))
+
+
+
+
+        
+
+
+
+
 
     def show_context_menu(self, position):
         sender = self.sender()
@@ -1400,73 +1512,170 @@ class IPTVPlayerApp(QMainWindow):
             print(f"Error sorting channel list: {e}")
 
     def search_in_list(self, tab_name, text):
+        """
+        When the user types in the search bar for the given tab (LIVE, Movies, Series):
+          - If text is empty => revert to the original list in the current level
+          - If at top-level => search category names
+          - If inside a sub-level => search items in that sub-level (channels/movies/episodes)
+
+        Displays "Not Found" if no results.
+        """
+
         list_widget = self.get_list_widget(tab_name)
         if not list_widget:
             return
 
+        # Trim leading/trailing spaces
+        text = text.strip()
+
+        # 1) If the search bar is cleared => revert to original view
+        if not text:
+            if self.navigation_stacks[tab_name]:
+                # We are inside a sub-level
+                last_level = self.navigation_stacks[tab_name][-1]
+                level = last_level['level']
+                data = last_level['data']
+                scroll_position = last_level.get('scroll_position', 0)
+
+                list_widget.clear()
+                go_back_item = QListWidgetItem("Go Back")
+                go_back_item.setIcon(self.go_back_icon)
+                list_widget.addItem(go_back_item)
+
+                if level == 'channels':
+                    # Re-show the channels for this category
+                    self.entries_per_tab[tab_name] = data['entries']
+                    self.show_channels(list_widget, tab_name)
+                    list_widget.verticalScrollBar().setValue(scroll_position)
+
+                elif level == 'series_categories':
+                    self.show_series_in_category(
+                        data['series_list'],
+                        restore_scroll_position=True,
+                        scroll_position=scroll_position
+                    )
+
+                elif level == 'series':
+                    self.show_seasons(
+                        data['seasons'],
+                        restore_scroll_position=True,
+                        scroll_position=scroll_position
+                    )
+
+                elif level == 'season':
+                    self.show_episodes(
+                        data['episodes'],
+                        restore_scroll_position=True,
+                        scroll_position=scroll_position
+                    )
+            else:
+                # No stack => top-level: show the categories again
+                self.update_category_lists(tab_name)
+
+            return  # Done reverting on empty text
+
+        # 2) The user typed something => do the search
         list_widget.clear()
 
+        # If inside a sub-level, we add "Go Back" at the top
         if self.navigation_stacks[tab_name]:
             go_back_item = QListWidgetItem("Go Back")
             go_back_item.setIcon(self.go_back_icon)
             list_widget.addItem(go_back_item)
 
         filtered_items = []
-        if self.login_type == 'xtream':
-            if tab_name != "Series":
+
+        # 2A) If we are at TOP-LEVEL (stack is empty):
+        #     => Search among category names in self.groups[tab_name]
+        if not self.navigation_stacks[tab_name]:
+            group_list = self.groups.get(tab_name, [])
+            for group in group_list:
+                cat_name = group["category_name"]
+                if text.lower() in cat_name.lower():
+                    # We found a matching category
+                    item = QListWidgetItem(cat_name)
+                    if tab_name == 'LIVE':
+                        item.setIcon(self.live_channel_icon)
+                    elif tab_name == 'Movies':
+                        item.setIcon(self.movies_channel_icon)
+                    elif tab_name == 'Series':
+                        item.setIcon(self.series_channel_icon)
+                    else:
+                        item.setIcon(self.style().standardIcon(QtWidgets.QStyle.SP_FileIcon))
+
+                    filtered_items.append(item)
+
+        # 2B) If we are INSIDE a sub-level (stack is not empty):
+        else:
+            # Look at the last level
+            last_level = self.navigation_stacks[tab_name][-1]
+            level = last_level['level']
+
+            if level == 'channels':
+                # We’re in a channel list => search channels in entries_per_tab[tab_name]
                 for entry in self.entries_per_tab[tab_name]:
-                    if text.lower() in entry['name'].lower():
-                        item = QListWidgetItem(entry['name'])
+                    channel_name = entry.get('name', '')
+                    if text.lower() in channel_name.lower():
+                        item = QListWidgetItem(channel_name)
                         item.setData(Qt.UserRole, entry)
                         if tab_name == 'LIVE':
-                            channel_icon = self.live_channel_icon
+                            item.setIcon(self.live_channel_icon)
                         elif tab_name == 'Movies':
-                            channel_icon = self.movies_channel_icon
-                        elif tab_name == 'Series':
-                            channel_icon = self.series_channel_icon
+                            item.setIcon(self.movies_channel_icon)
                         else:
-                            channel_icon = self.style().standardIcon(QtWidgets.QStyle.SP_FileIcon)
-                        item.setIcon(channel_icon)
+                            item.setIcon(self.style().standardIcon(QtWidgets.QStyle.SP_FileIcon))
                         filtered_items.append(item)
-            else:
-                stack = self.navigation_stacks['Series']
-                if not stack or stack[-1]['level'] == 'series_categories':
-                    for group in self.groups["Series"]:
-                        if text.lower() in group["category_name"].lower():
-                            item = QListWidgetItem(group["category_name"])
-                            item.setIcon(self.series_channel_icon)
-                            filtered_items.append(item)
-                elif stack[-1]['level'] == 'series_categories':
-                    for entry in self.current_series_list:
-                        if text.lower() in entry['name'].lower():
-                            item = QListWidgetItem(entry['name'])
-                            item.setData(Qt.UserRole, entry)
-                            item.setIcon(self.series_channel_icon)
-                            filtered_items.append(item)
-                elif stack[-1]['level'] == 'series':
-                    for season in self.current_seasons:
-                        if text.lower() in f"Season {season}".lower():
-                            item = QListWidgetItem(f"Season {season}")
-                            item.setData(Qt.UserRole, season)
-                            item.setIcon(self.series_channel_icon)
-                            filtered_items.append(item)
-                elif stack[-1]['level'] == 'season':
-                    for episode in self.current_episodes:
-                        if text.lower() in episode['title'].lower():
-                            episode_entry = {
-                                "season": episode.get('season'),
-                                "episode_num": episode['episode_num'],
-                                "name": f"{episode['title']}",
-                                "url": f"{self.server}/series/{self.username}/{self.password}/{episode['id']}.{episode.get('container_extension', 'm3u8')}",
-                                "title": episode['title']
-                            }
-                            item = QListWidgetItem(f"Episode {episode['episode_num']}: {episode['title']}")
-                            item.setData(Qt.UserRole, episode_entry)
-                            item.setIcon(self.series_channel_icon)
-                            filtered_items.append(item)
 
-        for item in filtered_items:
-            list_widget.addItem(item)
+            elif level == 'series_categories':
+                # We’re in a series-list => search in self.current_series_list
+                for series_info in self.current_series_list:
+                    series_name = series_info["name"]
+                    if text.lower() in series_name.lower():
+                        item = QListWidgetItem(series_name)
+                        item.setData(Qt.UserRole, series_info)
+                        item.setIcon(self.series_channel_icon)
+                        filtered_items.append(item)
+
+            elif level == 'series':
+                # We’re listing the seasons => let's see if user typed "Season 1", "Season 2", etc.
+                for season in self.current_seasons:
+                    label = f"Season {season}"
+                    if text.lower() in label.lower():
+                        item = QListWidgetItem(label)
+                        item.setData(Qt.UserRole, season)
+                        item.setIcon(self.series_channel_icon)
+                        filtered_items.append(item)
+
+            elif level == 'season':
+                # We’re listing episodes => search by episode title
+                for episode in self.current_episodes:
+                    ep_title = episode.get('title', '')
+                    if text.lower() in ep_title.lower():
+                        display_text = f"Episode {episode['episode_num']}: {ep_title}"
+                        episode_entry = {
+                            "season": episode.get('season'),
+                            "episode_num": episode['episode_num'],
+                            "name": display_text,
+                            "url": f"{self.server}/series/{self.username}/{self.password}/{episode['id']}.{episode.get('container_extension', 'm3u8')}",
+                            "title": ep_title
+                        }
+                        item = QListWidgetItem(display_text)
+                        item.setData(Qt.UserRole, episode_entry)
+                        item.setIcon(self.series_channel_icon)
+                        filtered_items.append(item)
+
+        # 3) After building 'filtered_items', decide what to show
+        if not filtered_items:
+            # No results => show "Not Found"
+            not_found_item = QListWidgetItem("Not Found")
+            not_found_item.setFlags(not_found_item.flags() & ~Qt.ItemIsSelectable & ~Qt.ItemIsEnabled)
+            list_widget.addItem(not_found_item)
+        else:
+            # Sort them by text if you like
+            filtered_items.sort(key=lambda x: x.text().lower())
+            for item in filtered_items:
+                list_widget.addItem(item)
+
 
     def get_list_widget(self, tab_name):
         return self.list_widgets.get(tab_name)
