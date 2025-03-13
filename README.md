@@ -1,8 +1,3 @@
-Support My Work
-
-Hi there! 👋 If you’ve found my projects helpful, consider [buying me a coffee](https://buymeacoffee.com/My11)☕️ to support ongoing development and keep everything free and open-source.
-
-Thank you for your support! 😊
 
 **XTREME IPTV PLAYER by My-1**
 Enhanced platform compatibility for Windows 10, Windows 11, macOS Sequoia, and Linux. 
